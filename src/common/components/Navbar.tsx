@@ -1,11 +1,29 @@
+'use client';
+
 import Link from 'next/link';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export const Navbar = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      setIsLoading(true);
+      await signOut({ redirect: false });
+      router.push('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <nav className="bg-white shadow-md dark:bg-gray-800">
+    <nav className="sticky top-0 z-50 bg-white shadow-md dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
@@ -15,16 +33,25 @@ export const Navbar = () => {
           </div>
           <div className="flex items-center">
             <div className="hidden md:ml-6 md:flex md:space-x-8">
-              <Link href="/" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white">
+              <Link href="/" className="nav-link">
                 Home
               </Link>
-              {session && (
+              {session ? (
                 <>
-                  <Link href="/documents" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white">
+                  <Link href="/documents" className="nav-link">
                     Documents
                   </Link>
-                  <Link href="/projects" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white">
+                  <Link href="/projects" className="nav-link">
                     Projects
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/features" className="nav-link">
+                    Features
+                  </Link>
+                  <Link href="/pricing" className="nav-link">
+                    Pricing
                   </Link>
                 </>
               )}
@@ -33,22 +60,37 @@ export const Navbar = () => {
               {session ? (
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {session.user?.name || session.user?.email}
+                    {session.user?.email}
                   </span>
                   <button
-                    onClick={() => signOut()}
-                    className="px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                    onClick={handleSignOut}
+                    disabled={isLoading}
+                    className={`px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
-                    Sign out
+                    {isLoading ? 'Signing out...' : 'Sign out'}
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={() => signIn()}
-                  className="px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                >
-                  Sign in
-                </button>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => router.push('/auth/signin')}
+                    disabled={isLoading}
+                    className={`px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    onClick={() => router.push('/auth/register')}
+                    disabled={isLoading}
+                    className="px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
+                  >
+                    Register
+                  </button>
+                </div>
               )}
             </div>
           </div>

@@ -16,11 +16,14 @@ export async function GET(
       );
     }
     
-    // Get the user ID
+    // Get the user ID and role
     const prisma = new (await import('@prisma/client')).PrismaClient();
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true }
+      select: { 
+        id: true,
+        role: true
+      }
     });
     
     if (!user) {
@@ -30,7 +33,7 @@ export async function GET(
       );
     }
     
-    const document = await getDocumentById(params.id, user.id);
+    const document = await getDocumentById(params.id, user.id, user.role);
     
     if (!document) {
       return NextResponse.json(
@@ -63,11 +66,14 @@ export async function PUT(
       );
     }
     
-    // Get the user ID
+    // Get the user ID and role
     const prisma = new (await import('@prisma/client')).PrismaClient();
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true }
+      select: { 
+        id: true,
+        role: true
+      }
     });
     
     if (!user) {
@@ -80,7 +86,7 @@ export async function PUT(
     const data = await request.json();
     const { title, description } = data;
     
-    // Only allow updating certain fields
+    // Updated to match the function signature: (id, userId, data)
     const updatedDocument = await updateDocument(params.id, user.id, {
       title,
       description
@@ -110,11 +116,14 @@ export async function DELETE(
       );
     }
     
-    // Get the user ID
+    // Get the user ID and role
     const prisma = new (await import('@prisma/client')).PrismaClient();
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true }
+      select: { 
+        id: true,
+        role: true
+      }
     });
     
     if (!user) {
@@ -124,7 +133,7 @@ export async function DELETE(
       );
     }
     
-    await deleteDocument(params.id, user.id);
+    await deleteDocument(params.id, user.id, user.role);
     
     return NextResponse.json({ success: true });
   } catch (error: any) {

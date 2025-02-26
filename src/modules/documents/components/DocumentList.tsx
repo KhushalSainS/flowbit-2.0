@@ -89,7 +89,7 @@ export function DocumentList() {
                   className="text-blue-500 hover:text-blue-700"
                 >
                   View
-                </Link
+                </Link>
                 
                 <button
                   onClick={() => handleDelete(doc.id)}

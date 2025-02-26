@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     // Validate inputs
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Name, email, and password are required' },
+        { success: false, message: 'Name, email, and password are required' },
         { status: 400 }
       );
     }
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Please enter a valid email address' },
+        { success: false, message: 'Please enter a valid email address' },
         { status: 400 }
       );
     }
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Validate password strength
     if (password.length < 8) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
+        { success: false, message: 'Password must be at least 8 characters long' },
         { status: 400 }
       );
     }
@@ -34,21 +34,26 @@ export async function POST(request: NextRequest) {
     // Register user
     const user = await registerUser({ name, email, password });
     
-    return NextResponse.json({ user }, { status: 201 });
+    return NextResponse.json({ 
+      success: true,
+      message: 'User registered successfully', 
+      user: { 
+        id: user.id, 
+        name: user.name,
+        email: user.email,
+        role: user.role 
+      } 
+    });
+    
   } catch (error: any) {
     console.error('Registration error:', error);
     
-    // Handle specific errors
-    if (error.message === 'User with this email already exists') {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 409 } // Conflict
-      );
-    }
-    
     return NextResponse.json(
-      { error: error.message || 'Failed to register user' },
-      { status: 500 }
+      { 
+        success: false, 
+        message: error.message || 'Failed to register user'
+      },
+      { status: error.message === 'User with this email already exists' ? 409 : 500 }
     );
   }
 }

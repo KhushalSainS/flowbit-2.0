@@ -1,29 +1,45 @@
-import { validateCredentials } from '../services/authService';
+import { NextRequest, NextResponse } from 'next/server';
+import { loginUser } from '../services/authService';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
     
+    // Validate inputs
     if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: 'Email and password are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
       );
     }
-
-    const user = await validateCredentials({ email, password });
     
-    return new Response(
-      JSON.stringify({ user }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    // Login user
+    const result = await loginUser({ email, password });
+    
+    return NextResponse.json({
+      message: 'Login successful',
+      user: {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role
+      },
+      token: result.token
+    });
   } catch (error: any) {
     console.error('Login error:', error);
     
-    return new Response(
-      JSON.stringify({ error: error.message || 'Authentication failed' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    if (error.message === 'Invalid email or password') {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 401 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Authentication failed' },
+      { status: 500 }
     );
   }
 }
